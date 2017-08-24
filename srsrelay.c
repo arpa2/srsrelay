@@ -98,7 +98,9 @@ void rewrite (srs_info *srsi, char *buf, int *buflen) {
 
 	domi = srsi->wrapper? srsi->domc: 0;
 	while (domi-- > 0) {
+#ifdef DEBUG
 printf ("DEBUG: Comparing #%d len %d so \"%.*s\" plus 0x%02x to \"%.*s\"\n", domi, domain_len, domain_len, srsi->domv [domi], domain_len, srsi->domv [domi] [domain_len], domain);
+#endif
 		if ((strncasecmp (srsi->domv [domi], domain, domain_len) == 0)
 					&& (srsi->domv [domi] [domain_len] == '\0')) {
 			syslog (LOG_DEBUG, "Not wrapping MAIL FROM:<...@%.*s> for SRS", domain_len, domain);
@@ -113,10 +115,12 @@ printf ("DEBUG: Comparing #%d len %d so \"%.*s\" plus 0x%02x to \"%.*s\"\n", dom
 			MAXLEN_BUF - srsi->magic_len - closer_len,
 			address,
 			srsi->domv [0]);
+#ifdef DEBUG
 printf ("DEBUG: buf = \"%.*s\"\n", buflen, buf);
 printf ("DEBUG: address = \"%s\"\n", address);
 printf ("DEBUG: newbuf = \"%s...\"\n", newbuf);
 printf ("srsout = %d\n", srsout);
+#endif
 	if (srsout != SRS_SUCCESS) {
 		if (srsout == SRS_ENOTSRSADDRESS) {
 			syslog (LOG_ERR, "That was not an SRS address");
@@ -128,7 +132,9 @@ printf ("srsout = %d\n", srsout);
 	srslen = strlen (newbuf + srsi->magic_len);
 	*closer = '>';
 	memcpy (newbuf + srsi->magic_len + srslen, closer, closer_len);
+#ifdef DEBUG
 printf ("New buffer is \"%.*s\"\n", srsi->magic_len + srslen + closer_len, newbuf);
+#endif
 
 #if 0
 	//TODO// LOG_DEBUG output is *rather* hairy, better split?
@@ -178,7 +184,9 @@ void filter_smtp (srs_info *srsi, int cli, int rly) {
 				eof |= 1;
 				shutdown (cli, SHUT_RD);
 			}
+#ifdef DEBUG
 printf ("DEBUG: Client input of %d bytes: %.*s\n", buflen, buflen, buf);
+#endif
 			if (buflen > srsi->magic_len) {
 				if (strncasecmp (buf, srsi->magic, srsi->magic_len) == 0) {
 					rewrite (srsi, buf, &buflen);
@@ -206,7 +214,9 @@ printf ("DEBUG: Client input of %d bytes: %.*s\n", buflen, buflen, buf);
 				eof |= 2;
 				shutdown (rly, SHUT_RD);
 			}
+#ifdef DEBUG
 printf ("DEBUG: Relay sent %d bytes: %.*s\n", buflen, buflen, buf);
+#endif
 			outlen = write (cli, buf, buflen);
 			if (outlen < 0) {
 				logperror ("Client send error");
@@ -459,11 +469,11 @@ int main (int argc, char *argv []) {
 			exit (1);
 		}
 		if (keylen < 16) {
-			syslog (LOG_CRIT, "Key of length %d < 16 disapproved on line $d", keylen, keyline);
+			syslog (LOG_CRIT, "Key of length %d < 16 disapproved on line %d", keylen, keyline);
 			exit (1);
 		}
 		if (key [keylen - 1] != '\n') {
-			syslog (LOG_CRIT, "Key not followed by newline on line $d", keyline);
+			syslog (LOG_CRIT, "Key not followed by newline on line %d", keyline);
 			exit (1);
 		}
 		key [keylen - 1] = '\0';
@@ -509,12 +519,18 @@ int main (int argc, char *argv []) {
 
 	// sox = input_socket (argv [1], srsinfo.wrapper? argv [2]: argv [3]);
 	sox = named_socket (1, argv [1], srsinfo.wrapper? argv [2]: argv [3]);
+#ifdef DEBUG
 printf ("DEBUG: Listening to input socket %d\n", sox);
+#endif
 	while (cli = accept (sox, NULL, NULL), cli != -1) {
+#ifdef DEBUG
 printf ("DEBUG: Accepted on input socket %d\n", cli);
+#endif
 		// rly = output_socket (argv [4], argv [5]);
 		rly = named_socket (0, argv [4], argv [5]);
+#ifdef DEBUG
 printf ("DEBUG: Connected to output socket %d\n", rly);
+#endif
 		switch (fork ()) {
 		case -1:
 			logperror ("Failed to fork for client connection");
