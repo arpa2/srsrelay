@@ -86,7 +86,7 @@ is still active.
 The SRS Relay presents two SMTP services on different ports, let's
 say port 10252 for packing and port 10262 for unpacking, both on
 ::1 or localhost.  We shall demonstrate for the primary domain
-`example.com` and secondary domain `exmaple.org`.
+`example.com` and secondary domain `example.org`.
 
 The commandline to do this would be
 
